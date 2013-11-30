@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>ccDialog demo</title>
+<link href="css/ccDialog.css" type="text/css" rel="stylesheet" />
+</head>
+
+<body>
+<input type="button" name="btn1" id="btn1" value="测试1" />
+<script src="js/jquery-1.min.js" type="text/javascript"></script>
+<script src="js/jquery.ccDialog.js" type="text/javascript"></script>
+<script type="text/javascript">
+$(function(){
+	var settings = {"msg":"2222222"};
+	var ccdialog = $.fn.ccDialog.init("aaa", settings);
+	var ccdialog2 = $.fn.ccDialog.init("bbb");
+	
+	$("#btn1").on("click", function(){
+		ccdialog.show("a.htm", 500, 300);
+	});
+});
+</script>
+</body>
+</html>
