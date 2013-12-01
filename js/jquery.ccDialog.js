@@ -33,10 +33,33 @@
 	var index = 1;				//对象序号计数
 	var regTag = /{(\w*?)}/ig;	//标签替换正则表达式
 	
+	//栈操作
+	//定义栈
+	mystack=[];
+	win.ccDialogStack={
+		//进栈操作
+		"push":function(_obj){
+			mystack.push(_obj);
+		},
+		//出栈操作，返回第一个元素
+		"pop":function(){
+			return mystack.pop();
+		},
+		//取栈的第一个元素，但是不出栈
+		"top":function(){
+			var len = mystack.length;
+			if(len>0){
+				return mystack[len-1];
+			}else{
+				return undef;
+			}
+		}
+	};
+	
 	//ccDialog方法
 	ccDialog.util={
 		//生成遮罩层
-		createMask:function(settings){
+		"createMask":function(settings){
 			if(!hasMask){
 				var temp = "<div id=\"{maskid}\" class=\"ccmask {skin}\"><iframe src=\"about:blank\" frameborder=\"0\" style=\"width:100%; height:100%; display:none; _display:block;\"></iframe></div>";
 				//替换模板标签
@@ -53,7 +76,7 @@
 		},
 		
 		//显示遮罩层
-		showMask:function(_ccdialog){
+		"showMask":function(_ccdialog){
 			var 
 				_hash = _ccdialog.hash,
 				_mask = _hash.mask,
@@ -62,7 +85,7 @@
 		},
 		
 		//隐藏遮罩层
-		hideMask:function(_ccdialog){
+		"hideMask":function(_ccdialog){
 			var
 				_hash = _ccdialog.hash,
 				_mask = _hash.mask;
@@ -70,7 +93,7 @@
 		},
 		
 		//生成对话框
-		createDialog:function(_id, _settings){
+		"createDialog":function(_id, _settings){
 			var arr=[], dialogHTML, _dialog;
 			//皮肤div
 			var skinHTML = ["<div class=\"", _settings.skin ,"\"></div>"].join("");
@@ -92,7 +115,7 @@
 		},
 		
 		//显示对话框
-		showDialog:function(_url, _title, _w, _h, _ccdialog){
+		"showDialog":function(_url, _title, _w, _h, _ccdialog){
 			var
 				_hash = _ccdialog.hash,
 				_dialog = _hash.dialog,
@@ -101,22 +124,21 @@
 			this.resizeDialog(_w, _h, _dialog);
 			_dialog.find("iframe").attr("src", _url).on("load", function(){})//未完成
 				.end().find("a.ccclose").off("click").on("click", function(e){
-					_this.hideMask(_ccdialog);
-					_this.hideDialog(_ccdialog);
+					_this.hide(_ccdialog);
 					return false;
 				})
 				.end().css({"index":10*_index + 1}).show();
 		},
 		
 		//隐藏对话框
-		hideDialog:function(_ccdialog, ret){
+		"hideDialog":function(_ccdialog, ret){
 			var
 				_hash = _ccdialog.hash;
 			_hash.dialog.hide();
 		},
 		
 		//改变对话框大小
-		resizeDialog:function(_w, _h, _dialog){
+		"resizeDialog":function(_w, _h, _dialog){
 			var
 				_h2, _mgt, _mgl;
 			_h2 = _h + 26;
@@ -126,12 +148,38 @@
 				.find("iframe").width(_w).height(_h2);
 		},
 		
-		getObj:function(id){
+		//显示遮罩层与窗体
+		"show":function(_url, _title, _w, _h, _ccdialog){
+			//显示遮罩层
+			this.showMask(_ccdialog);
+			//显示窗体
+			this.showDialog(_url, _title, _w, _h, _ccdialog);
+			//对象进栈
+			ccDialogStack.push(_ccdialog);
+		},
+		
+		//隐藏遮罩层与窗体
+		"hide":function(_ccdialog, _ret){
+			var _events = _ccdialog.events;
+			//隐藏遮罩层
+			this.hideMask(_ccdialog);
+			//隐藏窗口
+			this.hideDialog(_ccdialog);
+			//对象出栈
+			ccDialogStack.pop();
+			//隐藏事件处理
+			if(_events && typeof(_events.onhide)==="function"){
+				_events.onhide.apply(_ccdialog, [_ret]);
+			}
+		},
+		
+		"getObj":function(id){
 			var _id = ["#", id].join("");
 			return $(_id);
 		}
 	};
 	
+	//**** 公开方法代码 ****
 	//显示模态窗口
 	ccDialog.prototype.show=function(_url, _title, _w, _h, _callback){
 		//参数处理
@@ -143,42 +191,40 @@
 				_callback=_title;
 				_w = ccDialog.defaults.w;
 				_h = ccDialog.defaults.h;
-			}else if(typeof(_h)==="function"){
-				_callback=_h;
-				_h=_w;
-				_w=_title;
+			}else if(typeof(_title)==="number"){
+				_callback = typeof(_h)==="function" ? _h : undef;
+				_h = _w;
+				_w = _title;
 			}else{
 				_w = ccDialog.defaults.w;
 				_h = ccDialog.defaults.h;
 			}
 			_title = ccDialog.defaults.cctitle;
 		}
-		//显示遮罩层
-		ccDialog.util.showMask(this);
-		//显示对话框
-		ccDialog.util.showDialog(_url, _title, _w, _h, this);
+		//显示
+		ccDialog.util.show(_url, _title, _w, _h, this);
 		//绑定关闭事件
 		$.extend(this.events, {"onhide":_callback});
 	};
 	
 	//隐藏模态窗口
-	ccDialog.prototype.hide=function(){
-		var 
-			_events = this.events;
-		//隐藏遮罩层
-		ccDialog.util.hideMask(this);
-		//触发关闭事件
-		if(typeof(_events.onhide)==="function"){
-			_events.onhide();
-		}
+	ccDialog.prototype.hide=function(_ret){
+		ccDialog.util.hide(this, _ret);
 	};
 	
+	//**** 插件部分代码 ****
 	$.fn.ccDialog={
+		//初始化对象
 		"init":function(id, settings){
 			return new ccDialog(id, settings);
 		},
-		"close":function(){
-			alert("asdfgh");
+		
+		//iframe页面关闭窗口的方法（仅供iframe弹出页面调用）
+		"close":function(ret){
+			var dialog = win.parent.ccDialogStack.top();
+			if(dialog){
+				dialog.hide.apply(dialog, [ret]);
+			}
 		}
 	}
 })(jQuery, window);

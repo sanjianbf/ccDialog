@@ -8,17 +8,27 @@
 
 <body>
 <input type="button" name="btn1" id="btn1" value="测试1" />
+<input type="button" name="btn2" id="btn2" value="测试2" />
 <script src="js/jquery-1.min.js" type="text/javascript"></script>
 <script src="js/jquery.ccDialog.js" type="text/javascript"></script>
 <script type="text/javascript">
 $(function(){
 	var settings = {"msg":"2222222"};
+	var settings2 = {"skin":"ccblue"};
 	var ccdialog = $.fn.ccDialog.init("aaa", settings);
 	var ccdialog2 = $.fn.ccDialog.init("bbb");
+	var a1="aaa1";
 	
 	$("#btn1").on("click", function(){
-		ccdialog.show("a.htm", 500, 300);
+		var b1="bbb1";
+		ccdialog.show("a.htm", 500, 300, function(ret){ 
+			alert("最终："+ret);
+		});
 	});
+	
+	$("#btn2").on("click", function(){
+		ccdialog2.show("a.htm", 800, 400);
+	});	
 });
 </script>
 </body>
