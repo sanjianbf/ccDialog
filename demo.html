@@ -9,14 +9,36 @@
 <body>
 <input type="button" name="btn1" id="btn1" value="测试1" />
 <input type="button" name="btn2" id="btn2" value="测试2" />
+<input type="button" name="btn3" id="btn3" value="测试3" />
+<div id="demo3" style="display:none;">
+	<table>
+    	<tbody>
+        	<tr>
+            	<td>1</td>
+                <td>2</td>
+                <td>3</td>
+            </tr>
+            <tr>
+            	<td>4</td>
+                <td>5</td>
+                <td>6</td>
+            </tr>
+        </tbody>
+    </table>
+    <div><input type="button" id="btn_demo3" value="demo3" /></div>
+</div>
 <script src="js/jquery-1.min.js" type="text/javascript"></script>
 <script src="js/jquery.ccDialog.js" type="text/javascript"></script>
 <script type="text/javascript">
 $(function(){
-	var settings = {"msg":"2222222"};
+	$("#btn_demo3").on("click", function(){
+		ccdialog3.hide("3333");
+	});
+	var settings1 = {"msg":"2222222"};
 	var settings2 = {"skin":"ccblue"};
-	var ccdialog = $.fn.ccDialog.init("aaa", settings);
-	var ccdialog2 = $.fn.ccDialog.init("bbb");
+	var ccdialog = $.fn.ccDialog.init("aaa", settings1);
+	var ccdialog2 = $.fn.ccDialog.init("bbb", settings2);
+	var ccdialog3 = $.fn.ccDialog.wrap("demo3", settings1);
 	var a1="aaa1";
 	
 	$("#btn1").on("click", function(){
@@ -27,7 +49,15 @@ $(function(){
 	});
 	
 	$("#btn2").on("click", function(){
-		ccdialog2.show("a.htm", 800, 400);
+		ccdialog2.show("a.htm", 800, 400, function(ret){
+			alert(ret);
+		});
+	});	
+	
+	$("#btn3").on("click", function(){
+		ccdialog3.show("自定义标题", function(ret){
+			alert(ret);
+		});
 	});	
 });
 </script>

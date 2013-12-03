@@ -4,9 +4,13 @@
 	var ccDialog=function(id, settings){
 		//处理设定信息
 		this.settings = $.extend({}, ccDialog.defaults, settings||{});
+		//生成遮罩层
+		var _mask = ccDialog.util.createMask(this.settings);
+		//生成对话框
+		var _dialog = ccDialog.util.createDialog(id, this.settings);
 		this.hash = {
-			"mask":	ccDialog.util.createMask(this.settings),
-			"dialog":ccDialog.util.createDialog(id, this.settings),
+			"mask":	_mask,
+			"dialog":_dialog,
 			"index":index++
 		};
 		this.events = $.extend({}, ccDialog.events);
@@ -17,6 +21,7 @@
 		"msg":"111",
 		"skin":"ccdefault",
 		"maskid":"ccDialogMask",
+		"method":"iframe",
 		"cctitle":"对话框",
 		"w":400,
 		"h":300,
@@ -61,15 +66,15 @@
 		//生成遮罩层
 		"createMask":function(settings){
 			if(!hasMask){
-				var temp = "<div id=\"{maskid}\" class=\"ccmask {skin}\"><iframe src=\"about:blank\" frameborder=\"0\" style=\"width:100%; height:100%; display:none; _display:block;\"></iframe></div>";
+				var _temp = "<div id=\"{maskid}\" class=\"ccmask {skin}\"><iframe src=\"about:blank\" frameborder=\"0\" style=\"width:100%; height:100%; display:none; _display:block;\"></iframe></div>";
 				//替换模板标签
-				var maskHTML = temp.replace(regTag, function(r, r1){
+				var _maskHTML = _temp.replace(regTag, function(r, r1){
 					return settings[r1];
 				});
 				//设标志变量
 				hasMask = true;
 				//将遮罩层附加到body并返回该对象
-				return $(maskHTML).appendTo("body");
+				return $(_maskHTML).appendTo("body");
 			}else{
 				return this.getObj(ccDialog.defaults.maskid);
 			}
@@ -92,25 +97,80 @@
 			_mask.hide();
 		},
 		
+		//生成对话框html代码
+		"generateDialog":function(){
+			var 
+				_arr=[];
+			_arr.push("<div class=\"{skin}\">");
+			_arr.push("<div id=\"{id}\" class=\"ccdialog\">");
+			_arr.push("<div class=\"ccbar\"><span class='cctitle' title=\"{cctitle}\">{cctitle}</span><a href=\"javascript:void(0);\" class=\"ccclose\" title=\"关闭\"></a></div>");
+			_arr.push("<div class=\"cccontent\">{content}</div>  </div>  </div>");
+			return _arr.join("");
+		},
+		
 		//生成对话框
 		"createDialog":function(_id, _settings){
-			var arr=[], dialogHTML, _dialog;
-			//皮肤div
-			var skinHTML = ["<div class=\"", _settings.skin ,"\"></div>"].join("");
-			//对话框html代码
-			arr.push("<div id=\"{id}\" class=\"ccdialog\">");
-			arr.push("<div class=\"ccbar\"><span class='cctitle' title=\"{cctitle}\">{cctitle}</span><a href=\"javascript:void(0);\" class=\"ccclose\" title=\"关闭\"></a></div>");	
-			arr.push("<div><iframe id=\"{id}_ifrDialog\" name=\"{id}_ifrDialog\" src=\"about:blank\" frameborder=\"0\" scrolling=\"auto\" style=\"width:100%; height:100%;\"></iframe></div>");
-			arr.push("</div>");
-			dialogHTML = arr.join("").replace(regTag, function(r, r1){
-				if(r1=="id"){
-					return _id;
-				}else{
-					return _settings[r1];
+			var _dialog;
+			switch(_settings.method){
+				case "iframe":
+					_dialog = this.createIframeDialog(_id, _settings);
+					break;
+				case "wrap":
+					_dialog = this.createWrapDialog(_id, _settings);
+					break;
+				default:
+					this.error("createDialog Error:Method " +  _settings.method + " does not exist on jQuery.ccDialog!");
+					return;
+					break;
+			}
+			return _dialog;
+		},
+		
+		//生成iframe dialog
+		"createIframeDialog":function(_id, _settings){
+			var
+				_dialogHTML,
+				_ifrHTML = "<div><iframe id=\"{id}_ifrDialog\" name=\"{id}_ifrDialog\" src=\"about:blank\" frameborder=\"0\" scrolling=\"auto\" style=\"width:100%; height:100%;\"></iframe></div>;";
+			_dialogHTML = this.generateDialog();
+			_dialogHTML = _dialogHTML.replace(regTag, function(r, r1){
+				switch(r1){
+					case "id":
+						return _id;
+						break;
+					case "content":
+						return _ifrHTML;
+						break;
+					default:
+						return _settings[r1] ? _settings[r1] : "";
+						break;
 				}
 			});
-			_dialog = $(dialogHTML).appendTo("body").wrap(skinHTML);
-			
+			_dialog = $(_dialogHTML).appendTo("body").find("#"+_id);
+			return _dialog;
+		},
+		
+		//包裹已存在对象
+		//_id为需要包裹对象的id
+		"createWrapDialog":function(_id, _settings){
+			//生成dialog的id
+			var 
+				_dlgid = this.generateID(_id)
+				_dialogHTML = this.generateDialog();
+			_dialogHTML = _dialogHTML.replace(regTag, function(r, r1){
+				switch(r1){
+					case "id":
+						return _dlgid;
+						break;
+					case "content":
+						return "";
+						break;
+					default:
+						return _settings[r1] ? _settings[r1] : "";
+						break;
+				}
+			});
+			_dialog = $(_dialogHTML).appendTo("body").find("#" + _dlgid);
+			_dialog.find("div.cccontent").append(this.getObj(_id).show());
 			return _dialog;
 		},
 		
@@ -173,9 +233,21 @@
 			}
 		},
 		
-		"getObj":function(id){
-			var _id = ["#", id].join("");
-			return $(_id);
+		//获得对象
+		"getObj":function(_id){
+			var _jid = ["#", _id].join("");
+			return $(_jid);
+		},
+		
+		//生成随机id
+		"generateID":function(_id){
+			return [_id, "_wrapper"].join("");
+		},
+		
+		//错误处理
+		"error":function(_msg){
+			alert(_msg);
+			return false;
 		}
 	};
 	
@@ -183,23 +255,71 @@
 	//显示模态窗口
 	ccDialog.prototype.show=function(_url, _title, _w, _h, _callback){
 		//参数处理
-		if(typeof(_url)!=="string"){
-			_url = "about:blank";	
-		}
-		if(typeof(_title)!=="string"){
-			if(typeof(_title)==="function"){
-				_callback=_title;
-				_w = ccDialog.defaults.w;
-				_h = ccDialog.defaults.h;
-			}else if(typeof(_title)==="number"){
-				_callback = typeof(_h)==="function" ? _h : undef;
-				_h = _w;
-				_w = _title;
-			}else{
-				_w = ccDialog.defaults.w;
-				_h = ccDialog.defaults.h;
-			}
-			_title = ccDialog.defaults.cctitle;
+		switch(this.settings.method){
+			case "iframe":
+				if(typeof(_url)!=="string"){
+					_url = "about:blank";	
+				}
+				if(typeof(_title)!=="string"){
+					if(typeof(_title)==="function"){
+						_callback=_title;
+						_w = ccDialog.defaults.w;
+						_h = ccDialog.defaults.h;
+					}else if(typeof(_title)==="number"){
+						_callback = typeof(_h)==="function" ? _h : undef;
+						_h = _w;
+						_w = _title;
+					}else{
+						_w = ccDialog.defaults.w;
+						_h = ccDialog.defaults.h;
+					}
+					_title = ccDialog.defaults.cctitle;
+				}
+				break;
+			case "wrap":
+				if(arguments.length>4){
+					//参数个数超过4个
+					ccDialog.util.error("show Error:Parameter number error!");
+					return;
+				}
+				var _arg = Array.prototype.slice.call(arguments); 
+				
+				if(typeof(arguments[0])==="function"){
+					//第一个参数为function，则只有一个参数
+					_callback = arguments[0];
+					_url = undef;
+					_title = ccDialog.defaults.cctitle;
+					_w = ccDialog.defaults.w;
+					_h = ccDialog.defaults.h;
+				}else if(typeof(arguments[0])==="number"){
+					//第一个参数为number，则有2或3个参数
+					_callback = typeof(_arg[2])==="function" ? _arg[2] : undef;
+					_h = typeof(_arg[1])==="number" ? _arg[1] : ccDialog.defaults.h;
+					_w = ccDialog.defaults.w;
+					_title = ccDialog.defaults.cctitle;
+					_url = undef;
+				}else if(typeof(arguments[0])==="string"){
+					//第一个参数为string，则有1-4个参数
+					_title = _arg[0];
+					if(typeof(_arg[1])==="function"){
+						_callback = _arg[1];
+						_url = undef;
+						_w = ccDialog.defaults.w;
+						_h = ccDialog.defaults.h;
+					}else if(typeof(_arg[1])==="number"){
+						_w = _arg[1];
+						_h = typeof(_arg[2])==="number" ? _arg[2] : ccDialog.defaults.h;
+						_callback = typeof(_arg[3])==="function" ? _arg[3] : undef;
+					}else{
+						ccDialog.util.error("1show Error:Parameter type error!");
+					}
+				}else{
+					ccDialog.util.error("2show Error:Parameter type error!");
+				}
+				break;
+			default:
+				ccDialog.util.error("show Error:Method " +  _settings.method + " does not exist on jQuery.ccDialog!");
+				break;
 		}
 		//显示
 		ccDialog.util.show(_url, _title, _w, _h, this);
@@ -216,7 +336,12 @@
 	$.fn.ccDialog={
 		//初始化对象
 		"init":function(id, settings){
-			return new ccDialog(id, settings);
+			return new ccDialog(id, $.extend(settings, {"method":"iframe"}));
+		},
+		
+		//包裹对象
+		"wrap":function(id, settings){
+			return new ccDialog(id, $.extend(settings, {"method":"wrap"}));
 		},
 		
 		//iframe页面关闭窗口的方法（仅供iframe弹出页面调用）
