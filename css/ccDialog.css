@@ -1,7 +1,7 @@
 @charset "utf-8";
 /**************************************
 ccDialog Style
-version:	3.4
+version:	0.0.1_alpha
 author:		Sanjianbf
 email:		sanjianbf@gmail.com
 ****************************************/
@@ -12,7 +12,11 @@ email:		sanjianbf@gmail.com
 	left:50%;
 	top:40%;
 	width:200px;
-	height:100px;}
+	height:100px;
+	background:#fff;
+	box-shadow: 0 0 10px rgba(100, 100, 100, 0.5);
+	border-radius:5px 5px 0 0;
+	-moz-border-radius:5px 5px 0 0;}
 .ccbar{
 	overflow:hidden;
 	height:25px;
@@ -36,11 +40,7 @@ email:		sanjianbf@gmail.com
 
 /*skin - default*/
 .ccdefault .ccdialog{
-	border:1px solid #888;
-	background:#fff;
-	box-shadow: 0 0 10px rgba(100, 100, 100, 0.5);
-	border-radius:5px 5px 0 0;
-	-moz-border-radius:5px 5px 0 0;}
+	border:1px solid #888;}
 .ccdefault .ccbar{
 	background-position:0 0;
 	border-bottom:1px solid #c2c2c2;
@@ -63,3 +63,26 @@ email:		sanjianbf@gmail.com
 	color:#666;
 	font-size:12px;
 	font-family:"\5FAE\8F6F\96C5\9ED1", Verdana, Geneva, sans-serif;}
+
+/*sink - blue*/
+.ccblue .ccdialog{}
+.ccblue .ccbar{
+	background-position: 0 -50px;
+	height:36px;
+	line-height:36px;}
+.ccblue .ccclose{
+	position:absolute;
+	width:19px;
+	height:19px;
+	right:15px;
+	top:8px;
+	background-position:0 -90px;}
+.ccblue .ccclose:hover{
+	background-position:-30px -90px;}
+.ccblue span.cctitle{
+	height:36px;
+	line-height:inherit;
+	font-size:14px;
+	color:#fff;
+	padding-left:1em;
+	font-weight:bold;}
