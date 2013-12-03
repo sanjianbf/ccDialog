@@ -1,4 +1,6 @@
-﻿// JavaScript Document
+﻿/*!
+ * jQuery Dialog Plugin
+ */
 ;(function($, win, undef){
 		   
 	var ccDialog=function(id, settings){
@@ -61,7 +63,7 @@
 		}
 	};
 	
-	//ccDialog方法
+	//ccDialog私有方法
 	ccDialog.util={
 		//生成遮罩层
 		"createMask":function(settings){
@@ -180,13 +182,23 @@
 				_hash = _ccdialog.hash,
 				_dialog = _hash.dialog,
 				_index = _hash.index,
-				_this = this;
-			this.resizeDialog(_w, _h, _dialog);
-			_dialog.find("iframe").attr("src", _url).on("load", function(){})//未完成
-				.end().find("a.ccclose").off("click").on("click", function(e){
+				_this = this, _ifr;
+			this.resizeDialog(_w, _h, _ccdialog);
+			
+			//iframe方式，设置iframe的src
+			_ifr = _dialog.find("iframe");
+			if(_ifr.length>0){
+				_ifr.attr("src", _url);
+			}
+			
+			//绑定关闭事件
+			_dialog.find("a.ccclose").off("click").on("click", function(e){
 					_this.hide(_ccdialog);
 					return false;
 				})
+				//设置标题
+				.end().find("div.ccbar .cctitle").html(_title)
+				//设置css并显示
 				.end().css({"index":10*_index + 1}).show();
 		},
 		
@@ -198,14 +210,18 @@
 		},
 		
 		//改变对话框大小
-		"resizeDialog":function(_w, _h, _dialog){
+		"resizeDialog":function(_w, _h, _ccdialog){
 			var
-				_h2, _mgt, _mgl;
-			_h2 = _h + 26;
+				_dialog = _ccdialog.hash.dialog,
+				_h2, _mgt, _mgl, _ifr;
+			_h2 = _h + this.getBarHeight(_ccdialog);
 			_mgt = 0 - Math.floor(_h2/2);
 			_mgl = 0 - Math.floor(_w/2);
-			_dialog.width(_w).height(_h2).css({"margin-top":_mgt, "margin-left":_mgl})
-				.find("iframe").width(_w).height(_h2);
+			_ifr = _dialog.width(_w).height(_h2).css({"margin-top":_mgt, "margin-left":_mgl})
+				.find("iframe");
+			if(_ifr.length>0){
+				_ifr.width(_w).height(_h2)
+			}
 		},
 		
 		//显示遮罩层与窗体
@@ -231,6 +247,18 @@
 			if(_events && typeof(_events.onhide)==="function"){
 				_events.onhide.apply(_ccdialog, [_ret]);
 			}
+		},
+		
+		//获得bar高度
+		"getBarHeight":function(_ccdialog){
+			var 
+				heights = {
+					"ccdefault":26,
+					"ccblue":36
+				},
+				_skin = _ccdialog.settings.skin,
+				_h = heights[_skin];
+			return typeof(_h)==="number" ? _h : 0;
 		},
 		
 		//获得对象
@@ -301,6 +329,7 @@
 				}else if(typeof(arguments[0])==="string"){
 					//第一个参数为string，则有1-4个参数
 					_title = _arg[0];
+					alert(_title);
 					if(typeof(_arg[1])==="function"){
 						_callback = _arg[1];
 						_url = undef;
