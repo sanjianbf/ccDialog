@@ -329,7 +329,6 @@
 				}else if(typeof(arguments[0])==="string"){
 					//第一个参数为string，则有1-4个参数
 					_title = _arg[0];
-					alert(_title);
 					if(typeof(_arg[1])==="function"){
 						_callback = _arg[1];
 						_url = undef;
